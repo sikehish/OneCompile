@@ -9,6 +9,7 @@ func newRouter() *gin.Engine {
 	r := gin.Default()
 	//Testing if the API's working
 	r.GET("/test", handlers.TestHandler)
+	r.POST("/execute", handlers.Execute)
 	return r
 }
 
