@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
-	"github.com/robertkrimen/otto"
 )
 
 type Spec struct {
@@ -25,12 +27,43 @@ func Execute(c *gin.Context) {
 		return
 	}
 
-	vm := otto.New()
-	result, err:= vm.Run(spec.Code)
+	output, err := runJsInDocker(spec.Code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result, "input": spec.Code})
+	c.JSON(http.StatusOK, gin.H{"output": output})
+}
+
+func runJsInDocker(code string) (string, error) {
+	cmd := exec.Command("docker", "run", "--rm", "-i", "node:latest", "node")
+
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return "", fmt.Errorf("failed to create stdin pipe: %v", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		return "", fmt.Errorf("failed to start Docker command: %v", err)
+	}
+
+	if _, err := stdin.Write([]byte(code)); err != nil {
+		return "", fmt.Errorf("failed to write code to stdin: %v", err)
+	}
+
+	stdin.Close()
+
+	if err := cmd.Wait(); err != nil {
+		return "", fmt.Errorf("failed to execute code: %v, stderr: %s", err, stderr.String())
+	}
+
+	output := stdout.String()
+	return output, nil
 }
