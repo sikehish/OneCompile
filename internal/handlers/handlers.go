@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"os/exec"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +39,10 @@ func Execute(c *gin.Context) {
 }
 
 func runJsInDocker(code string) (string, error) {
-	cmd := exec.Command("docker", "run", "--rm", "-i", "node:latest", "node")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Set timeout duration (e.g., 10 seconds)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-i", "node:latest", "node")
 
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
@@ -60,7 +65,12 @@ func runJsInDocker(code string) (string, error) {
 
 	stdin.Close()
 
+	//wait for command to finish/timeout
 	if err := cmd.Wait(); err != nil {
+		//check if the error is due to timeout
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("execution timed out")
+		}
 		return "", fmt.Errorf("failed to execute code: %v, stderr: %s", err, stderr.String())
 	}
 
