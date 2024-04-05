@@ -21,11 +21,25 @@ func TestHandler(c *gin.Context) {
 func Execute(c *gin.Context) {
 	var spec Spec
 	if err := c.BindJSON(&spec); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
 		return
 	}
 
-	output, err := utils.RunJsInDocker(spec.Code)
+	lang, code := spec.Language, spec.Code
+
+	var output string
+	var err error
+
+	switch lang {
+	case "js", "javascript":
+		output, err = utils.RunJsInDocker(code)
+	case "py", "python":
+		output, err = utils.RunPythonInDocker(code)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported language"})
+		return
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
