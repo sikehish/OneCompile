@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
@@ -13,16 +12,14 @@ func RunJavaInDocker(code string) (string, error) {
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "openjdk:latest", "/bin/bash", "-c", fmt.Sprintf("echo '%s' > Main.java && javac Main.java && java Main", code))
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return "", fmt.Errorf("execution timed out")
 		}
-		return "", fmt.Errorf("failed to execute Java code: %v, stderr: %s", err, stderr.String())
+		return "", fmt.Errorf("failed to execute Java code: %v, output: %s", err, output)
 	}
 
-	return stdout.String(), nil
+	return string(output), nil
 }
