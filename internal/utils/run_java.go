@@ -8,10 +8,18 @@ import (
 )
 
 func RunJavaInDocker(code string) (string, error) {
+
+	const image = "openjdk:latest"
+	if err := CheckImageExists(image); err != nil {
+		if err := PullDockerImage(image); err != nil {
+			return "", err
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "openjdk:latest", "/bin/bash", "-c", fmt.Sprintf("echo '%s' > Main.java && javac Main.java && java Main", code))
+	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", image, "/bin/bash", "-c", fmt.Sprintf("echo '%s' > Main.java && javac Main.java && java Main", code))
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

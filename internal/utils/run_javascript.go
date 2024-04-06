@@ -9,10 +9,18 @@ import (
 )
 
 func RunJsInDocker(code string) (string, error) {
+
+	const image = "node:latest"
+	if err := CheckImageExists(image); err != nil {
+		if err := PullDockerImage(image); err != nil {
+			return "", err
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-i", "node:latest", "node")
+	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-i", image, "node")
 
 	cmd.Stdin = strings.NewReader(code)
 
