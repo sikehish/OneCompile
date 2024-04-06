@@ -4,28 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 )
 
 func RunCppInDocker(code string) (string, error) {
-	tempDir, err := os.MkdirTemp("", "cpp")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temporary directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	cppFile := filepath.Join(tempDir, "main.cpp")
-	if err := os.WriteFile(cppFile, []byte(code), 0644); err != nil {
-		return "", fmt.Errorf("failed to write C++ source file: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-v", fmt.Sprintf("%s:/code", tempDir), "gcc:latest", "/bin/bash", "-c", "g++ /code/main.cpp -o /code/main && /code/main")
+	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-i", "gcc:latest", "bash", "-c", fmt.Sprintf("echo '%s' > main.cpp && g++ main.cpp -o main && ./main", code))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
