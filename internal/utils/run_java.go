@@ -24,9 +24,16 @@ func RunJavaInDocker(code string) (string, error) {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
+			containerID, err := GetContainerID(image)
+			if err != nil {
+				return "", fmt.Errorf("execution timed out and failed to retrieve container ID: %v", err)
+			}
+			if err := exec.Command("docker", "stop", containerID).Run(); err != nil {
+				return "", fmt.Errorf("failed to stop container %s: %v", containerID, err)
+			}
 			return "", fmt.Errorf("execution timed out")
 		}
-		return "", fmt.Errorf("failed to execute Java code: %v, output: %s", err, output)
+		return "", fmt.Errorf("failed to execute code: %v, output: %s", err, string(output))
 	}
 
 	return string(output), nil
