@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Applies to C/C++
 func RunCppInDocker(code string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
