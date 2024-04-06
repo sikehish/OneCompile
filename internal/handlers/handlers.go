@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sikehish/OneCompile/internal/utils"
@@ -21,11 +22,22 @@ func TestHandler(c *gin.Context) {
 func Execute(c *gin.Context) {
 	var spec Spec
 	if err := c.BindJSON(&spec); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+		// c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format!"})
 		return
 	}
 
 	lang, code := spec.Language, spec.Code
+
+	if strings.TrimSpace(code) == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Please write some code!"})
+		return
+	}
+
+	if strings.TrimSpace(lang) == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Language undefined"})
+		return
+	}
 
 	var output string
 	var err error
