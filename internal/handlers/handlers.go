@@ -39,6 +39,8 @@ func Execute(c *gin.Context) {
 		output, err = utils.RunJavaInDocker(code)
 	case "c", "cpp":
 		output, err = utils.RunCppInDocker(code)
+	case "go", "golang":
+		output, err = utils.RunGoInDocker(code)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported language"})
 		return
