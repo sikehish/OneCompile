@@ -10,7 +10,7 @@ import (
 
 func RunJsInDocker(code string) (string, error) {
 
-	const image = "node:latest"
+	const image = "node:alpine"
 	if err := CheckImageExists(image); err != nil {
 		if err := PullDockerImage(image); err != nil {
 			return "", err

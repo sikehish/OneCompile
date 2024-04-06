@@ -9,7 +9,7 @@ import (
 
 func RunJavaInDocker(code string) (string, error) {
 
-	const image = "openjdk:latest"
+	const image = "openjdk:slim"
 	if err := CheckImageExists(image); err != nil {
 		if err := PullDockerImage(image); err != nil {
 			return "", err

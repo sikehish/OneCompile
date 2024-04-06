@@ -10,7 +10,7 @@ import (
 
 func RunPythonInDocker(code string) (string, error) {
 
-	const image = "python:latest"
+	const image = "python:alpine"
 	if err := CheckImageExists(image); err != nil {
 		if err := PullDockerImage(image); err != nil {
 			return "", err
